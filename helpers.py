@@ -122,9 +122,55 @@ def get_features(subject_dict, sampling_rate=125, window_size=10):
 
     return X_features_dict
 
+def get_features_outlier(subject_dict, sampling_rate=125, window_size=10):
+    X_features_dict = {
+        'features': [],
+        'y_list': []
+    }
+
+    ## Calculate multi-lead features
+    ## Remove baseline wader and dc offset with highpass Butterworth. Also remove powerline interference (50hz).
+    ecg_cleaned_list = [
+        nk.ecg_clean(subject_dict[channel]['data'], sampling_rate=sampling_rate, method="neurokit")
+        for channel in subject_dict.keys()
+        ]
+
+    i_sqi = sqis.i_sqi(ecg_cleaned_list, sampling_rate)
+    pca_sqi = sqis.pca_sqi(np.array(ecg_cleaned_list).T) # 12 features
+
+    ## Calculate single-lead features
+    for i, channel in enumerate(subject_dict.keys()):
+        ecg_raw = subject_dict[channel]['data']
+        ecg_cleaned = ecg_cleaned_list[i]
+
+        ## Find peaks indices
+        peaks = nk.ecg_peaks(ecg_cleaned, sampling_rate=sampling_rate, method='kalidas2017')[1]['ECG_R_Peaks']
+
+        ## Featurize ecgs
+        ecg_features = featurization.featurize_ecg(window=ecg_cleaned, sampling_rate=sampling_rate)
+        ecg_sqis = sqis.get_ecg_sqis(ecg_raw, ecg_cleaned, peaks, sampling_rate, window=window_size) + [i_sqi, pca_sqi]
+
+        X_features_dict['y_list'].append(subject_dict[channel]['label'])
+        X_features_dict['features'].append(ecg_features + ecg_sqis)
+
+    return X_features_dict
+
 def generate_features_dict(output_dict, X_features_dict):
     with multiprocessing.Pool(processes=10) as pool:
         X_features_dicts = list(tqdm(pool.imap(get_features, [output_dict[subject] for subject in output_dict.keys()]), total=len(output_dict.keys())))
+        for i, d in enumerate(X_features_dicts):
+            # print(f"i: {i}, d:{d}")
+            for key in d.keys():
+                # print(f"key: {key}")
+                X_features_dict[key].extend(d[key])
+
+            X_features_dict['subject'].extend([i for _ in range(len(d['y_list']))])
+
+    return X_features_dict
+
+def generate_features_dict_outlier(output_dict, X_features_dict):
+    with multiprocessing.Pool(processes=10) as pool:
+        X_features_dicts = list(tqdm(pool.imap(get_features_outlier, [output_dict[subject] for subject in output_dict.keys()]), total=len(output_dict.keys())))
         for i, d in enumerate(X_features_dicts):
             # print(f"i: {i}, d:{d}")
             for key in d.keys():
