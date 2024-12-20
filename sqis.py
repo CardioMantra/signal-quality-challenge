@@ -610,7 +610,8 @@ def ent_sqi(signal):
     signal : np.array
         The input signal
     """
-    return antropy.sample_entropy(signal)
+    signal_numpy_array = np.array(signal)
+    return antropy.sample_entropy(signal_numpy_array)
 
 def pca_sqi(signal):
     """ Returns a PCA sqi of the input signals.
