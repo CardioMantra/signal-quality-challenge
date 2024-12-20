@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 *.npy
-dev/PPINNC/*
+
+.idea/
+data/

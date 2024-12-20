@@ -25,3 +25,45 @@ Collection of tools to analyze ECG, Plethysmography, and general time-series sig
     torch==1.11.0
     tqdm==4.62.3
     wfdb==3.4.1
+
+#### Tested on:
+    - Apple Mac M1 Pro
+    - nVidia Jetson Orin NX 16GB 
+
+### Installation:
+```shell
+conda create --name signal-quality-challenge python=3.8
+conda activate signal-quality-challenge
+
+conda install -c conda-forge ipywidgets
+conda install anaconda::scikit-learn
+conda install pytorch::pytorch torchvision torchaudio -c pytorch
+conda install antropy emd matplotlib neurokit2 numpy PyWavelets scipy tqdm wfdb
+pip install pyhrv biosppy heartpy
+```
+
+### Prepare datasets:
+```shell
+mkdir -p data/mitdb
+pushd data/mitdb
+aws s3 sync --no-sign-request s3://physionet-open/mitdb/1.0.0/ .
+popd
+
+mkdir -p data/nstdb
+pushd data/nstdb
+aws s3 sync --no-sign-request s3://physionet-open/nstdb/1.0.0/ .
+popd
+
+mkdir -p data/PICC
+pushd data/PICC
+aws s3 sync --no-sign-request s3://physionet-open/challenge-2011/1.0.0/ .
+popd
+```
+
+### Working components:
+```shell
+MyWorks/
+  - quality.ipynb       # Train and evaluate model on different combinations of features, extracted from ECG
+  - quality.py
+  - ecg_denoising.ipynb # Filtering main types of signal noise
+```
