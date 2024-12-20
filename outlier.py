@@ -4,7 +4,9 @@ from tqdm.notebook import tqdm
 import neurokit2 as nk
 import numpy as np
 import multiprocessing
-import datasets, sqis, featurization
+import sys
+import sklearn
+import datasets, sqis, featurization, helpers
 
 
 def get_features(subject_dict, sampling_rate=125, window_size=10):
@@ -42,7 +44,7 @@ def get_features(subject_dict, sampling_rate=125, window_size=10):
 
 
 if __name__ == "__main__":
-    data_path= '/data/PICC-small/'
+    data_path='./data/PICC/'
     output_dict = datasets.load_picc(data_path=data_path, verbose=False)
 
     X_features_dict = {'features': [], 'y_list': [], 'subject': []}
@@ -56,6 +58,7 @@ if __name__ == "__main__":
             X_features_dict['subject'].extend([i for _ in range(len(d['y_list']))])
 
     print(X_features_dict)
+    X_features_dict = helpers.generate_features_dict(output_dict, X_features_dict)
 
     ## Note that exact results cannot be reproduced as the official PICC challenge is trained on the entirety of set-a and evaluated on set-b
     import sklearn.ensemble
